@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Email Cleaner</title>
+    <link rel="stylesheet" href="/style.css">
+  </head>
+  <body>
+    <main class="container">
+      <h1>Email Cleaner</h1>
+      <p class="notice">Read-only review tool. “Move” is a suggestion only; this app does not modify your mailbox.</p>
+
+      <form id="scan-form" class="panel">
+        <div class="grid">
+          <label>From query<input name="from_query" type="text" placeholder="Acme or news@example.com"></label>
+          <label>Subject contains<input name="subject_contains" type="text" placeholder="sale"></label>
+          <label>Since date<input name="since_date" type="date"></label>
+          <label>Limit<input name="limit" type="number" min="1" placeholder="Optional"></label>
+        </div>
+        <button type="submit">Run scan</button>
+      </form>
+
+      <section id="messages"></section>
+      <section id="results" class="results"></section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "email-cleaner"
+version = "0.1.0"
+description = "Local read-only IMAP email review tool"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "anthropic>=0.51.0",
+  "beautifulsoup4>=4.12.3",
+  "Flask>=3.0.3",
+  "pydantic-settings>=2.3.4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2.2",
+  "ruff>=0.11.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.setuptools.packages.find]
+include = ["email_cleaner*"]
+
+[tool.setuptools.package-data]
+email_cleaner = ["web/*"]

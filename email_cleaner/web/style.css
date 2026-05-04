@@ -1,0 +1,75 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f5f7fb;
+  color: #1a2433;
+}
+
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+.panel,
+.card,
+.message,
+.notice {
+  background: white;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.95rem;
+}
+
+input,
+select,
+button {
+  font: inherit;
+  padding: 0.65rem;
+  border: 1px solid #cfd6e4;
+  border-radius: 8px;
+}
+
+button {
+  background: #3366ff;
+  color: white;
+  cursor: pointer;
+}
+
+.message.error {
+  border-left: 4px solid #d64545;
+}
+
+.message.success {
+  border-left: 4px solid #1d9c5d;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.snippet {
+  white-space: pre-wrap;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
