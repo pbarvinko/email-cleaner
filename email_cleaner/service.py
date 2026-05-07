@@ -16,19 +16,18 @@ class ScanService:
 
     def scan(self, request: ScanRequest) -> ScanResponse:
         effective_limit = min(request.limit or self._default_limit, self._max_limit)
-        message_ids = self._imap_client.search(request, effective_limit)
         results: list[ScanResultItem] = []
 
-        for message_id in message_ids:
-            raw_message = self._imap_client.fetch_message(message_id)
-            normalized = normalize_email(raw_message, message_id.decode("utf-8", errors="ignore"), self._snippet_length)
-            classification = safe_classify(self._classifier, normalized)
-            results.append(
-                ScanResultItem(
-                    **normalized.model_dump(),
-                    label=classification.label,
-                    reason=classification.reason,
+        with self._imap_client.scan_messages(request, effective_limit) as messages:
+            for message_id, raw_message in messages:
+                normalized = normalize_email(raw_message, message_id.decode("utf-8", errors="ignore"), self._snippet_length)
+                classification = safe_classify(self._classifier, normalized)
+                results.append(
+                    ScanResultItem(
+                        **normalized.model_dump(),
+                        label=classification.label,
+                        reason=classification.reason,
+                    )
                 )
-            )
 
         return ScanResponse(count=len(results), results=results)

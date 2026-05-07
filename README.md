@@ -2,6 +2,8 @@
 
 Local-first IMAP inbox review tool with a Flask backend and static web UI.
 
+Each scan searches `INBOX`, fetches matching messages over one authenticated read-only IMAP session, extracts readable content, and asks the classifier for a `keep`, `move`, or `uncertain` recommendation.
+
 ## Requirements
 
 - Python 3.11+
@@ -49,7 +51,13 @@ This supported startup path always binds the server to `0.0.0.0` and uses `SERVE
 
 Then open `http://127.0.0.1:38452/` from the same machine.
 
-The static web UI uses a single sender field, `from_query`, which maps directly to IMAP `FROM` search behavior.
+## How scans behave
+
+- The static web UI uses a single sender field, `from_query`, which still maps directly to IMAP `FROM` search behavior.
+- Snippet extraction prefers readable plain text, ignores noisy plain-text parts, and falls back to HTML when needed.
+- The UI shows a readable text snippet, while the classifier may instead receive Markdown derived from HTML when that produces better input.
+- Classifier responses are structured JSON with labels `keep`, `move`, and `uncertain`.
+- Overlong classifier reasons are truncated before they are returned by the API.
 
 ## Validate
 
@@ -62,6 +70,7 @@ pytest
 
 - Searches only `INBOX`
 - Read-only IMAP access only
+- Each scan reuses one authenticated read-only IMAP session for search and message fetches
 - No moving, deleting, flagging, or persisting review results
 - Label overrides exist only in the current browser session
 - Anthropic is the only classifier implementation in v1
