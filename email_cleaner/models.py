@@ -48,6 +48,7 @@ class NormalizedEmail(BaseModel):
     subject: str | None = None
     date: str | None = None
     snippet: str
+    classifier_input: str = Field(exclude=True)
     headers: dict[str, str] = Field(default_factory=dict)
 
 

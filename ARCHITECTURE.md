@@ -1,37 +1,55 @@
 # Repository scout report
 
-## Current stack
-- **Python 3.11+** (`pyproject.toml`)
-- **Flask** web app (`pyproject.toml`, `email_cleaner/app.py`)
-- **Pydantic + pydantic-settings** for request/config validation (`email_cleaner/models.py`, `email_cleaner/config.py`)
-- **Anthropic SDK** and IMAP integration for classification/scan pipeline (`pyproject.toml`, `email_cleaner/classifier.py`, `email_cleaner/imap_client.py`)
-- **Packaging/build:** setuptools backend (`pyproject.toml`)
+## Detected stack
+- **Language/runtime:** Python 3.11+ (`pyproject.toml`)
+- **Backend framework:** Flask (`pyproject.toml`, `email_cleaner/app.py`, `email_cleaner/api.py`)
+- **Validation/settings:** Pydantic + pydantic-settings (`email_cleaner/models.py`, `email_cleaner/config.py`)
+- **Email/normalization:** stdlib `email` parser + BeautifulSoup + **markdownify** (`email_cleaner/normalize.py`, `pyproject.toml`)
+- **Classifier:** Anthropic SDK (`email_cleaner/classifier.py`, `pyproject.toml`)
+- **Packaging/build:** setuptools (`pyproject.toml`)
 
-## Entrypoints
-- Module entrypoint: `python -m email_cleaner` (`email_cleaner/__main__.py`)
+## Entrypoints and runtime
+- Run app: `python -m email_cleaner` (`email_cleaner/__main__.py`)
 - App factory: `create_app()` (`email_cleaner/app.py`)
-- Runtime server launch: `run_app()` binds `0.0.0.0` and `SERVER_PORT` (`email_cleaner/app.py`, `email_cleaner/config.py`)
+- HTTP surface:
+  - `GET /` serves static UI (`email_cleaner/app.py`, `email_cleaner/web/`)
+  - `GET /api/health`, `POST /api/scan` (`email_cleaner/api.py`)
+- Settings are env-driven (`email_cleaner/config.py`); app binds `0.0.0.0` + `SERVER_PORT` (`email_cleaner/app.py`)
 
-## Config and runtime model
-- Environment-driven settings via `Settings(BaseSettings)` (`email_cleaner/config.py`)
-- Required env vars: `IMAP_HOST`, `IMAP_USERNAME`, `IMAP_PASSWORD`, `ANTHROPIC_API_KEY` (`README.md`)
-- Defaults include `IMAP_PORT=993`, `SERVER_PORT=38452`, scan limit/snippet bounds (`email_cleaner/config.py`)
-- `ScanRequest` enforces at least one search filter (`from_query`, `subject_contains`, or `since_date`) (`email_cleaner/models.py`)
+## Actual scan pipeline (current code)
+`POST /api/scan` -> `ScanRequest` validation -> `ScanService.scan()` -> IMAP scan -> normalize -> classifier -> typed response (`ScanResponse` / `ScanResultItem`).
 
-## UI and API structure
-- Static UI served from `email_cleaner/web/` (`index.html`, `app.js`, `style.css`)
-- `GET /` serves `index.html` directly (`email_cleaner/app.py`)
-- API blueprint under `/api` with:
-  - `GET /api/health`
-  - `POST /api/scan` (`email_cleaner/api.py`)
+Concrete layering in code:
+- API layer validates input and returns JSON/error envelopes (`email_cleaner/api.py`)
+- Service layer orchestrates per-message flow (`email_cleaner/service.py`)
+- IMAP layer performs search/fetch (`email_cleaner/imap_client.py`)
+- Normalization layer creates normalized fields (`email_cleaner/normalize.py`)
+- Classification layer returns `ClassificationResult` (`email_cleaner/classifier.py`, `email_cleaner/models.py`)
 
-## Tests and lint commands
-- Test: `pytest` (`README.md`, `[tool.pytest.ini_options]` in `pyproject.toml`)
-- Lint: `ruff check .` (`README.md`, `[tool.ruff]` in `pyproject.toml`)
-- No formatter command configured; no mypy/pyright config detected.
+## IMAP behavior
+- IMAP uses `IMAP4_SSL`, logs in, and selects `INBOX` with `readonly=True` (`email_cleaner/imap_client.py`)
+- Full scan reuses **one read-only IMAP session**: `scan_messages()` opens one connection, runs search once, then fetches each message on the same connection before closing (`email_cleaner/imap_client.py`)
+- Search criteria mapping includes `from_query` -> IMAP `FROM` (`email_cleaner/imap_client.py`)
 
-## Notable architectural conventions
-- App-factory + injectable `scan_service` to support test doubles (`email_cleaner/app.py`, `tests/conftest.py`)
-- Layered flow: API -> `ScanService` -> IMAP fetch/normalize -> classifier -> typed response (`email_cleaner/api.py`, `email_cleaner/service.py`)
-- Structured JSON error envelope for validation (`400`) and scan failures (`502`) (`email_cleaner/api.py`)
-- OpenSpec project artifacts are present (`openspec/config.yaml`, `openspec/specs/*`, `openspec/changes/archive/*`)
+## Normalization behavior
+- `normalize_email()` returns both:
+  - UI-facing `snippet`
+  - classifier-only `classifier_input` (excluded from API serialization via model field config) (`email_cleaner/normalize.py`, `email_cleaner/models.py`)
+- Plain-text handling prefers readable text and filters noisy plain-text using marker heuristics (e.g., CSS-like fragments such as `font-family`, `mso-`, `@media`) (`email_cleaner/normalize.py`)
+- HTML fallback behavior:
+  - UI `snippet` is extracted from HTML via BeautifulSoup text collapse
+  - `classifier_input` is generated from HTML via markdownify and normalized newlines (`email_cleaner/normalize.py`)
+- If neither clean plain text nor HTML yields content, fallback uses collapsed raw text parts with empty-content guard string (`email_cleaner/normalize.py`)
+
+## Anthropic classifier behavior
+- Uses a fixed `system` prompt describing keep/move/uncertain policy (`email_cleaner/classifier.py`)
+- Sends JSON payload where classifier sees `snippet` populated from `classifier_input` (`email_cleaner/classifier.py`)
+- Requests structured output with `output_config` + JSON schema (`label`, `reason`) (`email_cleaner/classifier.py`)
+- Classification reason truncation:
+  - reasons are truncated to 280 chars with trailing ellipsis when needed
+  - truncation is applied on normal parse path and fallback error paths (`email_cleaner/classifier.py`, `email_cleaner/models.py`)
+
+## Quality gates and conventions
+- Lint: `ruff check .` (`README.md`, `pyproject.toml`)
+- Test: `pytest` (`README.md`, `pyproject.toml`)
+- No dedicated formatter/type-checker command configured in repo configs.
