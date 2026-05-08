@@ -1,5 +1,7 @@
 from email.message import EmailMessage
 
+import pytest
+
 from email_cleaner.classifier import safe_classify
 from email_cleaner.models import NormalizedEmail
 from email_cleaner.normalize import normalize_email
@@ -125,10 +127,8 @@ class BrokenClassifier:
 
 
 def test_safe_classify_shapes_failures_as_uncertain():
-    result = safe_classify(
-        BrokenClassifier(),
-        NormalizedEmail(message_id='1', snippet='snippet', classifier_input='snippet'),
-    )
-
-    assert result.label == 'uncertain'
-    assert 'Classification unavailable' in result.reason
+    with pytest.raises(RuntimeError, match='provider unavailable'):
+        safe_classify(
+            BrokenClassifier(),
+            NormalizedEmail(message_id='1', snippet='snippet', classifier_input='snippet'),
+        )

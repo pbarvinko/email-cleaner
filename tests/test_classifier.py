@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
+import pytest
+
 from email_cleaner.classifier import (
     SYSTEM_PROMPT,
     AnthropicEmailClassifier,
@@ -129,15 +131,12 @@ def test_safe_classify_returns_uncertain_on_unparseable_response():
 def test_safe_classify_truncates_overlong_fallback_reason():
     classifier = ExplodingClassifier("b" * 400)
 
-    result = safe_classify(
-        classifier,
-        NormalizedEmail(
-            message_id="1",
-            snippet="Readable order update",
-            classifier_input="Readable order update",
-        ),
-    )
-
-    assert result.label == "uncertain"
-    assert len(result.reason) == 280
-    assert result.reason == f"Classification unavailable: {'b' * 251}…"
+    with pytest.raises(RuntimeError, match="b+"):
+        safe_classify(
+            classifier,
+            NormalizedEmail(
+                message_id="1",
+                snippet="Readable order update",
+                classifier_input="Readable order update",
+            ),
+        )

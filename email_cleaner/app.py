@@ -20,10 +20,12 @@ def create_app(
     app.config["SETTINGS"] = resolved_settings
 
     if scan_service is None:
-        classifier = AnthropicEmailClassifier(
-            api_key=resolved_settings.anthropic_api_key,
-            model=resolved_settings.anthropic_model,
-        )
+        classifier = None
+        if resolved_settings.anthropic_api_key:
+            classifier = AnthropicEmailClassifier(
+                api_key=resolved_settings.anthropic_api_key,
+                model=resolved_settings.anthropic_model,
+            )
         imap_client = ImapClient(
             host=resolved_settings.imap_host,
             port=resolved_settings.imap_port,

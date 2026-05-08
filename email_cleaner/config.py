@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     imap_username: str = Field(min_length=1)
     imap_password: str = Field(min_length=1)
 
-    anthropic_api_key: str = Field(min_length=1)
+    anthropic_api_key: str | None = Field(default=None, min_length=1)
     anthropic_model: str = Field(default="claude-haiku-4-5-20251001", min_length=1)
 
     server_port: int = Field(default=38452, ge=1, le=65535)

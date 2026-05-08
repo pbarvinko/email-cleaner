@@ -4,7 +4,7 @@ import pytest
 
 from email_cleaner.app import create_app
 from email_cleaner.config import Settings
-from email_cleaner.models import ScanResponse, ScanResultItem
+from email_cleaner.models import ScanResponse, ScanResultItem, ScanStages
 
 
 class FakeScanService:
@@ -29,6 +29,9 @@ def settings():
 def app(settings):
     response = ScanResponse(
         count=1,
+        mode="classify",
+        applied_count=0,
+        stages=ScanStages(searched=True, classified=True, applied=False),
         results=[
             ScanResultItem(
                 message_id="abc",
@@ -38,8 +41,12 @@ def app(settings):
                 date="2026-05-03T10:00:00+00:00",
                 snippet="Buy now",
                 headers={"List-Unsubscribe": "mailto:unsubscribe@example.com"},
+                classification_status="classified",
                 label="move",
                 reason="Promotional sale content",
+                target_folder="promo",
+                action="suggested_move",
+                action_reason="analysis only",
             )
         ],
     )

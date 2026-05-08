@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from json import JSONDecodeError
 from typing import Protocol
 
 from anthropic import Anthropic
@@ -88,7 +89,7 @@ def safe_classify(classifier: EmailClassifier, email: NormalizedEmail) -> Classi
             label="uncertain",
             reason=_truncate_reason(f"Classification unavailable: {exc}"),
         )
-    except Exception as exc:  # pragma: no cover - exercised via response shaping behavior
+    except (JSONDecodeError, TypeError) as exc:
         return ClassificationResult(
             label="uncertain",
             reason=_truncate_reason(f"Classification unavailable: {exc}"),

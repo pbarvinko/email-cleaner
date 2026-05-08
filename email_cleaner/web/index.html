@@ -9,14 +9,22 @@
   <body>
     <main class="container">
       <h1>Email Cleaner</h1>
-      <p class="notice">Read-only review tool. “Move” is a suggestion only; this app does not modify your mailbox.</p>
+      <p class="notice">Search mode skips classification. Classify mode is read-only. Clean mode applies mailbox moves based on classification results.</p>
 
       <form id="scan-form" class="panel">
         <div class="grid">
           <label>From query<input name="from_query" type="text" placeholder="Acme or news@example.com"></label>
           <label>Subject contains<input name="subject_contains" type="text" placeholder="sale"></label>
-          <label>Since date<input name="since_date" type="date"></label>
+          <label>On or after the date<input name="since_date" type="date"></label>
+          <label>Before the date<input name="before_date" type="date"></label>
           <label>Limit<input name="limit" type="number" min="1" placeholder="Optional"></label>
+          <label>Mode
+            <select name="mode" required>
+              <option value="search">Search only</option>
+              <option value="classify" selected>Classify</option>
+              <option value="clean">Clean</option>
+            </select>
+          </label>
         </div>
         <button type="submit">Run scan</button>
       </form>
